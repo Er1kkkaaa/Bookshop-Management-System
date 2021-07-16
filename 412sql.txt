@@ -1,0 +1,335 @@
+create table EMPLOYEES
+(
+	 ID 		int identity
+	,FirstName		nvarchar(64)
+	,LastName		nvarchar(64)
+	,Username		nvarchar(64)
+	,Email		nvarchar(64)
+	,Password		nvarchar(30)
+	,Phone	nvarchar(12)
+	,constraint PK_EMPLOYEE primary key (ID)
+);
+
+
+===============================================================================================================
+
+CREATE TABLE BOOKS
+(
+     ID          INT  IDENTITY,
+    AuthorName   NVARCHAR (64),
+    Title        NVARCHAR (64),
+    GenreID       INT,
+    ISBN         NVARCHAR (64),
+    Publisher    NVARCHAR (64),
+    Price        FLOAT,
+    PublicationYear INT,
+    Cover          VARBINARY (MAX),
+    CONSTRAINT PK_BOOKS PRIMARY KEY (ID)
+);
+
+
+==================================================================================================================
+
+
+CREATE TABLE Transactions 
+(
+    ID            INT IDENTITY,
+    GrandTotal    FLOAT,
+    PurchaseDate  DATETIME,
+    VAT           FLOAT,
+    Discount      FLOAT,
+    CONSTRAINT PK_Transactions PRIMARY KEY (ID)
+);
+
+
+==================================================================================================================
+
+CREATE TABLE TransactionDetails
+(
+    ID         INT IDENTITY,
+    orderID    INT,
+    AuthorName NVARCHAR,
+    BookTitle  NVARCHAR,
+    Price      FLOAT,
+    Qty        INT,
+    Total      FLOAT,
+    CONSTRAINT PK_TransactionDetails PRIMARY KEY CLUSTERED (ID)
+);
+
+==================================================================================================================
+
+create table Genres
+(
+	ID 		int identity
+	,GenreID int
+	,GenreName		nvarchar(64)
+	,constraint PK_Genre primary key (ID)
+)
+
+
+==============================================================================================================
+
+CREATE TABLE BOOKS
+(
+	 ID 		int identity
+	,AuthorName nvarchar(64)
+	,Title		nvarchar(64)
+	,GenreID	int
+	,ISBN		nvarchar(64)
+	,Publisher		nvarchar(64)
+	,Price		float
+	,PublicationYear	int
+	,Cover		varbinary(max)
+	,constraint PK_BOOKS primary key (ID)
+);
+
+
+
+==============================================================================================================
+
+CREATE PROC AddEmployees
+@FirstName nvarchar(64),
+@LastName nvarchar(64),
+@Username nvarchar(64),
+@Email nvarchar(64),
+@Password nvarchar(30),
+@Phone nvarchar(15)
+
+AS
+
+insert into EMPLOYEES 
+   (FirstName, LastName, Username, Email, Password, Phone)
+values
+   (@FirstName, @LastName, @Username, @Email, @Password, @Phone);
+
+==============================================================================================================
+
+
+CREATE PROC AddTransactionDetails
+	 @orderID		int
+	,@AuthorName	nvarchar(64)
+	,@BookTitle		nvarchar(64)
+	,@Price			float
+	,@Qty			int
+	,@Total			float
+AS
+
+insert into TransactionDetails 
+   (orderID, AuthorName, BookTitle, Price, Qty, Total)
+values
+   (@orderID, @AuthorName, @BookTitle, @Price, @Qty, @Total);
+
+==============================================================================================================
+
+CREATE PROC AddTransactions
+	 @GrandTotal		float
+	,@PurchaseDate	DateTime
+	,@VAT			float
+	,@Discount		float
+
+AS
+
+insert into TRANSACTIONS 
+   (GrandTotal, PurchaseDate, VAT, Discount)
+values
+   (@GrandTotal, @PurchaseDate, @VAT, @Discount);
+
+
+==============================================================================================================
+
+CREATE PROCEDURE DeleteBook
+		@ISBN nvarchar(64)
+AS
+    BEGIN
+		 DELETE from BOOKS
+		 WHERE ISBN = @ISBN
+    END
+
+==============================================================================================================
+
+CREATE   PROCEDURE DeleteEmployees
+		@Username nvarchar(64)
+AS
+    BEGIN
+		 DELETE from EMPLOYEES
+		 WHERE Username = @Username
+    END
+
+
+==============================================================================================================
+
+CREATE PROC InsertBook
+	 @AuthorName nvarchar(64)
+	,@Title		nvarchar(64)
+	,@GenreID	int
+	,@ISBN		nvarchar(64)
+	,@Publisher		nvarchar(64)
+	,@Price		float
+	,@PublicationYear	int
+	,@Cover		varbinary(max)
+
+AS
+
+insert into BOOKS 
+   (AuthorName, Title, GenreID, ISBN, Publisher, Price, PublicationYear,Cover)
+values
+   (@AuthorName, @Title, @GenreID, @ISBN, @Publisher, @Price, @PublicationYear,@Cover);
+
+
+
+==============================================================================================================
+
+CREATE procedure InsertBookAndAuthors
+	 @Title		nvarchar(64)
+	,@Genre		nvarchar(64)
+	,@ISBN		nvarchar(64)
+	,@Publisher	nvarchar(64)
+	,@Price		float
+	,@PublicationYear	int
+	,@Cover		varbinary(max)
+	,@AuthorName nvarchar(64)
+
+as 
+Begin
+	Declare @BookID int
+	Declare @AuthorID int
+
+	Select @BookID = ID from Books where Title = @Title
+										and Genre = @Genre
+										and ISBN = @ISBN
+										and Publisher = @Publisher
+										and Price = @Price
+										and PublicationYear = @PublicationYear
+										and Cover = @Cover;
+	if (@BookID is null)
+	Begin 
+		Insert into BOOKS values (@Title, @Genre, @ISBN, @Publisher, @Price, @PublicationYear, @Cover);
+		Select @BookID = SCOPE_IDENTITY()
+	End
+
+	Select @AuthorID = ID from AUTHORS where AuthorName = @AuthorName;
+
+	if(@AuthorID is null)
+	Begin
+		Insert into AUTHORS values (@AuthorName);
+		Select @AuthorID = SCOPE_IDENTITY()
+	End
+
+	Insert into AUTHORBOOKS values (@BookID,@AuthorID);
+End
+
+
+==============================================================================================================
+
+CREATE PROCEDURE ISBNAuthentication
+	@ISBN nvarchar(64)
+AS
+BEGIN 
+	SET	NOCOUNT ON;
+
+	select ISBN from Books
+	where ISBN = @ISBN 
+END
+
+
+==============================================================================================================
+
+CREATE PROC SalesSearch
+@Searched nvarchar(70)
+
+AS BEGIN 
+SELECT * FROM BOOKS
+WHERE Title LIKE '%' +@Searched+ '%'
+END
+
+==============================================================================================================
+
+CREATE   PROCEDURE SearchEmployees
+	@FirstName nvarchar(64)
+  AS
+    BEGIN
+		 Select * from EMPLOYEES
+		 WHERE @FirstName = '' OR
+		 FirstName LIKE '%' + @FirstName + '%'
+    END
+
+==============================================================================================================
+
+CREATE PROCEDURE UpdateBooks
+	 @AuthorName nvarchar(64)
+	,@Title		nvarchar(64)
+	,@GenreID	int
+	,@ISBN		nvarchar(64)
+	,@Publisher		nvarchar(64)
+	,@Price		float
+	,@PublicationYear	int
+  AS
+    BEGIN
+     UPDATE BOOKS 
+     SET  AuthorName = @AuthorName,
+		  Title = @Title,
+		  GenreID = @GenreID,
+		  Publisher = @Publisher,
+		  Price = @Price,
+		  PublicationYear = @PublicationYear
+     WHERE ISBN = @ISBN
+    END
+
+==============================================================================================================
+
+CREATE PROCEDURE UpdateEmployees
+	@FirstName nvarchar(64),
+	@LastName nvarchar(64),
+	@Username nvarchar(64),
+	@Email nvarchar(64),
+	@Password nvarchar(30),
+	@Phone nvarchar(12)
+  AS
+    BEGIN
+     UPDATE EMPLOYEES 
+     SET  FirstName = @FirstName,
+		  LastName = @LastName,
+		  Email = @Email,
+		  Password = @Password,
+		  Phone = @Phone
+     WHERE Username = @Username
+    END
+
+==============================================================================================================
+
+CREATE   PROCEDURE UserLogin
+	@Username nvarchar(64),
+	@Password nvarchar(64)
+
+AS
+BEGIN 
+	SET	NOCOUNT ON;
+
+	select Username from EMPLOYEES
+	where Username = @Username AND
+	Password = @Password
+
+END
+
+==============================================================================================================
+
+CREATE   PROCEDURE UsernameAuthenticity
+	@Username nvarchar(64)
+AS
+BEGIN 
+	SET	NOCOUNT ON;
+
+	select Username from EMPLOYEES
+	where Username = @Username 
+END
+
+==============================================================================================================
+
+CREATE PROC ViewAllBooksOrSearch
+@Title nvarchar(70)
+
+AS BEGIN 
+SELECT * FROM BOOKS
+WHERE @Title = '' OR Title LIKE '%' +@Title+ '%'
+
+END
